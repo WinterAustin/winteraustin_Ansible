@@ -1,0 +1,43 @@
+---
+# tasks file for send_logs
+- name: send logs to s3
+  block:
+    - name: ensure httpd is installed
+      yum:
+        name: httpd
+        state: latest
+    - name: start httpd
+      service:
+        name: httpd
+        state: started
+        enabled: true
+    - name: make sure python and pip are installed
+      yum:
+        name:
+          - python
+          - pip
+    - name: make sure boto, boto3, and botocore installed
+      pip:
+        name: "{{ item }}"
+      loop:
+        - boto
+        - boto3
+        - botocore
+    - name: save folder name
+      set_fact:
+        folder_name: "{{hostvars[inventory_hostname]['public_dns_name']}}"
+    - name: create folder for instance in s3
+      aws_s3:
+        bucket: "{{ httpdlogs-atw }}"
+        object: "{{ folder_name }}"
+        mode: create
+    - name: deposit error log to s3
+      aws_s3:
+        bucket: "{{ httpdlogs-atw }}"
+        object: "{{ folder_name }}/{{filename}}"
+        src: "{{filepath}}"
+        mode: put
+      register: putresult
+    - debug: msg="{{putresult.msg}} and the s3 object url is {{putresult.url}}"
+      when: putresult.changed
+    - debug: msg="{{folder_name}}"

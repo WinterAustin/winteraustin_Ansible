@@ -1,0 +1,17 @@
+---
+- name: Create Nodes and Bucket
+ 
+  hosts: tags_Name_awinter_worker
+  gather_facts: true
+  become: true
+  vars_files:
+    - "vars.yaml"
+  
+  roles:
+    - bucket_create
+    - node_create
+    - send_logs
+    
+    
+
+ 

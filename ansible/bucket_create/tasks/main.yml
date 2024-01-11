@@ -1,0 +1,38 @@
+---
+# tasks file for bucket_create
+- name: prepare s3 bucket
+  block: 
+    - name: make sure boto boto3 and botocore installed
+      pip:
+          name: "{{ item }}"
+      loop: 
+        - boto
+        - boto3
+        - botocore
+    - name: define s3 bucket policy
+      set_fact: 
+        s3_bucket_policy: |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "PublicRead",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::httpdlogs-atw/*"
+              }
+            ]
+          }
+    - name: create s3 bucket
+      s3_bucket:
+        name: httpdlogs-atw
+        region: us-east-1
+        state: present
+        policy: "{{ s3_bucket_policy }}"
+        public_acess:
+          block_public_acls: false
+          ignore_public_acls: false
+          block_public_policy: false
+          restrict_public_buckets: false
+  tags: ['never', 'create']
